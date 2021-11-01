@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+using System.Drawing;
+using ReClassNET.Controls;
 using ReClassNET.Memory;
 using ReClassNET.UI;
 
@@ -16,14 +17,14 @@ namespace ReClassNET.Nodes
 
 		public override string GetToolTipText(HotSpot spot)
 		{
-			var value = spot.Memory.ReadObject<UInt16Data>(Offset);
+			var value = new UInt16Data { ShortValue = spot.Memory.ReadInt16(Offset) };
 
 			return $"Int16: {value.ShortValue}\nUInt16: 0x{value.UShortValue:X04}";
 		}
 
-		public override Size Draw(ViewInfo view, int x, int y)
+		public override Size Draw(DrawContext context, int x, int y)
 		{
-			return Draw(view, x, y, view.Settings.ShowNodeText ? view.Memory.ReadString(view.Settings.RawDataEncoding, Offset, 2) + "       " : null, 2);
+			return Draw(context, x, y, context.Settings.ShowNodeText ? context.Memory.ReadString(context.Settings.RawDataEncoding, Offset, 2) + "       " : null, 2);
 		}
 
 		public override void Update(HotSpot spot)

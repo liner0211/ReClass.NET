@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Diagnostics.Contracts;
-using System.Runtime.InteropServices;
 using System.Text;
 using ReClassNET.Extensions;
+using ReClassNET.Util.Conversion;
 
 namespace ReClassNET.Memory
 {
@@ -15,12 +15,14 @@ namespace ReClassNET.Memory
 
 		public byte[] RawData => data;
 
+		public EndianBitConverter BitConverter { get; set; } = EndianBitConverter.System;
+
 		public int Size
 		{
 			get => data.Length;
 			set
 			{
-				if (value != data.Length)
+				if (value >= 0 && value != data.Length)
 				{
 					data = new byte[value];
 					historyData = new byte[value];
@@ -44,41 +46,26 @@ namespace ReClassNET.Memory
 		}
 
 		public MemoryBuffer()
-			: this(0)
 		{
 			Contract.Ensures(data != null);
 			Contract.Ensures(historyData != null);
-		}
 
-		public MemoryBuffer(int size)
-		{
-			Contract.Requires(size >= 0);
-			Contract.Ensures(data != null);
-			Contract.Ensures(historyData != null);
-
-			data = new byte[size];
-			historyData = new byte[size];
-		}
-
-		public MemoryBuffer(MemoryBuffer other)
-		{
-			Contract.Requires(other != null);
-			Contract.Ensures(data != null);
-			Contract.Ensures(historyData != null);
-
-			data = other.data;
-			historyData = other.historyData;
-			hasHistory = other.hasHistory;
-
-			ContainsValidData = other.ContainsValidData;
+			data = Array.Empty<byte>();
+			historyData = Array.Empty<byte>();
 		}
 
 		public MemoryBuffer Clone()
 		{
 			Contract.Ensures(Contract.Result<MemoryBuffer>() != null);
 
-			return new MemoryBuffer(this)
+			return new MemoryBuffer
 			{
+				data = data,
+				historyData = historyData,
+				hasHistory = hasHistory,
+
+				BitConverter = BitConverter,
+				ContainsValidData = ContainsValidData,
 				Offset = Offset
 			};
 		}
@@ -97,6 +84,8 @@ namespace ReClassNET.Memory
 			Array.Copy(data, historyData, data.Length);
 
 			hasHistory = ContainsValidData;
+
+			BitConverter = reader.BitConverter;
 
 			ContainsValidData = reader.ReadRemoteMemoryIntoBuffer(address, ref data);
 			if (!ContainsValidData)
@@ -131,23 +120,6 @@ namespace ReClassNET.Memory
 			}
 
 			Array.Copy(data, offset, buffer, 0, buffer.Length);
-		}
-
-		public T ReadObject<T>(int offset) where T : struct
-		{
-			Contract.Requires(offset >= 0);
-
-			offset = Offset + offset;
-			if (offset + Marshal.SizeOf(typeof(T)) > data.Length)
-			{
-				return default;
-			}
-
-			var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-			var obj = Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject() + offset);
-			handle.Free();
-
-			return obj;
 		}
 
 		#region Read Primitive Types
@@ -323,6 +295,20 @@ namespace ReClassNET.Memory
 			return (IntPtr)ReadInt64(offset);
 #else
 			return (IntPtr)ReadInt32(offset);
+#endif
+		}
+
+		/// <summary>Reads a <see cref="UIntPtr"/> from the specific offset.</summary>
+		/// <param name="offset">The offset into the data.</param>
+		/// <returns>The data read as <see cref="UIntPtr"/> or 0 if the offset is outside the data.</returns>
+		public UIntPtr ReadUIntPtr(int offset)
+		{
+			Contract.Requires(offset >= 0);
+
+#if RECLASSNET64
+			return (UIntPtr)ReadUInt64(offset);
+#else
+			return (UIntPtr)ReadUInt32(offset);
 #endif
 		}
 

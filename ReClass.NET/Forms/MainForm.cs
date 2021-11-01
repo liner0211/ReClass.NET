@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ReClassNET.AddressParser;
 using ReClassNET.CodeGenerator;
+using ReClassNET.Controls;
 using ReClassNET.Core;
 using ReClassNET.DataExchange.ReClass;
 using ReClassNET.Extensions;
@@ -20,12 +21,14 @@ using ReClassNET.Plugins;
 using ReClassNET.Project;
 using ReClassNET.UI;
 using ReClassNET.Util;
+using ReClassNET.Util.Conversion;
 
 namespace ReClassNET.Forms
 {
 	public partial class MainForm : IconForm
 	{
 		private readonly PluginManager pluginManager;
+		private readonly IconProvider iconProvider = new IconProvider();
 
 		private ReClassNetProject currentProject;
 		public ReClassNetProject CurrentProject => currentProject;
@@ -76,6 +79,7 @@ namespace ReClassNET.Forms
 
 			mainMenuStrip.Renderer = new CustomToolStripProfessionalRenderer(true, true);
 			toolStrip.Renderer = new CustomToolStripProfessionalRenderer(true, false);
+			isLittleEndianToolStripMenuItem.Checked = BitConverter.IsLittleEndian;
 
 			Program.RemoteProcess.ProcessAttached += sender =>
 			{
@@ -349,6 +353,11 @@ namespace ReClassNET.Forms
 			new NamedAddressesForm(Program.RemoteProcess).Show();
 		}
 
+		private void isLittleEndianToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			Program.RemoteProcess.BitConverter = isLittleEndianToolStripMenuItem.Checked ? (EndianBitConverter)EndianBitConverter.Little : EndianBitConverter.Big;
+		}
+
 		private void loadSymbolToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			using var ofd = new OpenFileDialog
@@ -464,29 +473,29 @@ namespace ReClassNET.Forms
 			var parentNode = node?.GetParentContainer();
 
 			var nodeIsClass = node is ClassNode;
-			var nodeIsSearchableValueNode = false;
-			switch (node)
+			var nodeIsSearchableValueNode = node switch
 			{
-				case BaseHexNode _:
-				case FloatNode _:
-				case DoubleNode _:
-				case Int8Node _:
-				case UInt8Node _:
-				case Int16Node _:
-				case UInt16Node _:
-				case Int32Node _:
-				case UInt32Node _:
-				case Int64Node _:
-				case UInt64Node _:
-				case Utf8TextNode _:
-				case Utf16TextNode _:
-				case Utf32TextNode _:
-					nodeIsSearchableValueNode = true;
-					break;
-			}
+				BaseHexNode _ => true,
+				FloatNode _ => true,
+				DoubleNode _ => true,
+				Int8Node _ => true,
+				UInt8Node _ => true,
+				Int16Node _ => true,
+				UInt16Node _ => true,
+				Int32Node _ => true,
+				UInt32Node _ => true,
+				Int64Node _ => true,
+				UInt64Node _ => true,
+				NIntNode _ => true,
+				NUIntNode _ => true,
+				Utf8TextNode _ => true,
+				Utf16TextNode _ => true,
+				Utf32TextNode _ => true,
+				_ => false
+			};
 
 			addBytesToolStripMenuItem.Enabled = parentNode != null || nodeIsClass;
-			insertBytesToolStripMenuItem.Enabled = count == 1 && parentNode != null;
+			insertBytesToolStripMenuItem.Enabled = count == 1 && parentNode != null && !nodeIsClass;
 
 			changeTypeToolStripMenuItem.Enabled = count > 0 && !nodeIsClass;
 
@@ -586,6 +595,8 @@ namespace ReClassNET.Forms
 				return;
 			}
 
+			var bitConverter = Program.RemoteProcess.BitConverter;
+
 			IScanComparer comparer;
 			switch (selectedNode.Node)
 			{
@@ -593,10 +604,10 @@ namespace ReClassNET.Forms
 					comparer = new ArrayOfBytesMemoryComparer(node.ReadValueFromMemory(selectedNode.Memory));
 					break;
 				case FloatNode node:
-					comparer = new FloatMemoryComparer(ScanCompareType.Equal, ScanRoundMode.Normal, 2, node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new FloatMemoryComparer(ScanCompareType.Equal, ScanRoundMode.Normal, 2, node.ReadValueFromMemory(selectedNode.Memory), 0.0f, bitConverter);
 					break;
 				case DoubleNode node:
-					comparer = new DoubleMemoryComparer(ScanCompareType.Equal, ScanRoundMode.Normal, 2, node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new DoubleMemoryComparer(ScanCompareType.Equal, ScanRoundMode.Normal, 2, node.ReadValueFromMemory(selectedNode.Memory), 0.0, bitConverter);
 					break;
 				case Int8Node node:
 					comparer = new ByteMemoryComparer(ScanCompareType.Equal, (byte)node.ReadValueFromMemory(selectedNode.Memory), 0);
@@ -605,23 +616,43 @@ namespace ReClassNET.Forms
 					comparer = new ByteMemoryComparer(ScanCompareType.Equal, node.ReadValueFromMemory(selectedNode.Memory), 0);
 					break;
 				case Int16Node node:
-					comparer = new ShortMemoryComparer(ScanCompareType.Equal, node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new ShortMemoryComparer(ScanCompareType.Equal, node.ReadValueFromMemory(selectedNode.Memory), 0, bitConverter);
 					break;
 				case UInt16Node node:
-					comparer = new ShortMemoryComparer(ScanCompareType.Equal, (short)node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new ShortMemoryComparer(ScanCompareType.Equal, (short)node.ReadValueFromMemory(selectedNode.Memory), 0, bitConverter);
 					break;
 				case Int32Node node:
-					comparer = new IntegerMemoryComparer(ScanCompareType.Equal, node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new IntegerMemoryComparer(ScanCompareType.Equal, node.ReadValueFromMemory(selectedNode.Memory), 0, bitConverter);
 					break;
 				case UInt32Node node:
-					comparer = new IntegerMemoryComparer(ScanCompareType.Equal, (int)node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new IntegerMemoryComparer(ScanCompareType.Equal, (int)node.ReadValueFromMemory(selectedNode.Memory), 0, bitConverter);
 					break;
 				case Int64Node node:
-					comparer = new LongMemoryComparer(ScanCompareType.Equal, node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new LongMemoryComparer(ScanCompareType.Equal, node.ReadValueFromMemory(selectedNode.Memory), 0L, bitConverter);
 					break;
 				case UInt64Node node:
-					comparer = new LongMemoryComparer(ScanCompareType.Equal, (long)node.ReadValueFromMemory(selectedNode.Memory), 0);
+					comparer = new LongMemoryComparer(ScanCompareType.Equal, (long)node.ReadValueFromMemory(selectedNode.Memory), 0L, bitConverter);
 					break;
+				case NIntNode node:
+				{
+					var value = node.ReadValueFromMemory(selectedNode.Memory);
+#if RECLASSNET64
+					comparer = new LongMemoryComparer(ScanCompareType.Equal, value.ToInt64(), 0L, bitConverter);
+#else
+					comparer = new IntegerMemoryComparer(ScanCompareType.Equal, value.ToInt32(), 0, bitConverter);
+#endif
+					break;
+				}
+				case NUIntNode node:
+				{
+					var value = node.ReadValueFromMemory(selectedNode.Memory);
+#if RECLASSNET64
+					comparer = new LongMemoryComparer(ScanCompareType.Equal, (long)value.ToUInt64(), 0L, bitConverter);
+#else
+					comparer = new IntegerMemoryComparer(ScanCompareType.Equal, (int)value.ToUInt32(), 0, bitConverter);
+#endif
+					break;
+				}
 				case Utf8TextNode node:
 					comparer = new StringMemoryComparer(node.ReadValueFromMemory(selectedNode.Memory), Encoding.UTF8, true);
 					break;
@@ -714,7 +745,7 @@ namespace ReClassNET.Forms
 			}
 		}
 
-		#endregion
+#endregion
 
 		private void MainForm_DragEnter(object sender, DragEventArgs e)
 		{
@@ -766,22 +797,24 @@ namespace ReClassNET.Forms
 			CurrentClassNode = node;
 		}
 
-		private void memoryViewControl_KeyDown(object sender, KeyEventArgs e)
+		private void memoryViewControl_KeyDown(object sender, KeyEventArgs args)
 		{
-			if (e.Control)
+			switch (args.KeyCode)
 			{
-				if (e.KeyCode == Keys.C)
-				{
+				case Keys.C when args.Control:
 					CopySelectedNodesToClipboard();
-				}
-				else if (e.KeyCode == Keys.V)
-				{
+					break;
+				case Keys.V when args.Control:
 					PasteNodeFromClipboardToSelection();
-				}
-			}
-			else if (e.KeyCode == Keys.Delete)
-			{
-				RemoveSelectedNodes();
+					break;
+
+				case Keys.Delete:
+					RemoveSelectedNodes();
+					break;
+
+				case Keys.F2:
+					EditSelectedNodeName();
+					break;
 			}
 		}
 
@@ -796,11 +829,12 @@ namespace ReClassNET.Forms
 
 			var node = selectedNodes.FirstOrDefault()?.Node;
 			var parentContainer = node?.GetParentContainer();
+			var nodeIsClass = node is ClassNode;
 
-			addBytesToolStripDropDownButton.Enabled = parentContainer != null || node is ClassNode;
-			insertBytesToolStripDropDownButton.Enabled = selectedNodes.Count == 1 && parentContainer != null;
+			addBytesToolStripDropDownButton.Enabled = parentContainer != null || nodeIsClass;
+			insertBytesToolStripDropDownButton.Enabled = selectedNodes.Count == 1 && parentContainer != null && !nodeIsClass;
 
-			var enabled = selectedNodes.Count > 0 && !(node is ClassNode);
+			var enabled = selectedNodes.Count > 0 && !nodeIsClass;
 			toolStrip.Items.OfType<TypeToolStripButton>().ForEach(b => b.Enabled = enabled);
 		}
 
@@ -1008,6 +1042,7 @@ namespace ReClassNET.Forms
 				memoryViewBuffer.UpdateFrom(process, address);
 
 				args.Settings = Program.Settings;
+				args.IconProvider = iconProvider;
 				args.Process = process;
 				args.Memory = memoryViewBuffer;
 				args.Node = classNode;

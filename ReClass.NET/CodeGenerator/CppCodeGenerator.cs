@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -6,11 +6,11 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using ReClassNET.Controls;
 using ReClassNET.Extensions;
 using ReClassNET.Logger;
 using ReClassNET.Nodes;
 using ReClassNET.Project;
-using ReClassNET.UI;
 
 namespace ReClassNET.CodeGenerator
 {
@@ -100,24 +100,24 @@ namespace ReClassNET.CodeGenerator
 		{
 			public override int MemorySize => throw new NotImplementedException();
 			public override void GetUserInterfaceInfo(out string name, out Image icon) => throw new NotImplementedException();
-			public override Size Draw(ViewInfo view, int x, int y) => throw new NotImplementedException();
-			public override int CalculateDrawnHeight(ViewInfo view) => throw new NotImplementedException();
+			public override Size Draw(DrawContext context, int x, int y) => throw new NotImplementedException();
+			public override int CalculateDrawnHeight(DrawContext context) => throw new NotImplementedException();
 		}
 
 		private class Utf16CharacterNode : BaseNode
 		{
 			public override int MemorySize => throw new NotImplementedException();
 			public override void GetUserInterfaceInfo(out string name, out Image icon) => throw new NotImplementedException();
-			public override Size Draw(ViewInfo view, int x, int y) => throw new NotImplementedException();
-			public override int CalculateDrawnHeight(ViewInfo view) => throw new NotImplementedException();
+			public override Size Draw(DrawContext context, int x, int y) => throw new NotImplementedException();
+			public override int CalculateDrawnHeight(DrawContext context) => throw new NotImplementedException();
 		}
 
 		private class Utf32CharacterNode : BaseNode
 		{
 			public override int MemorySize => throw new NotImplementedException();
 			public override void GetUserInterfaceInfo(out string name, out Image icon) => throw new NotImplementedException();
-			public override Size Draw(ViewInfo view, int x, int y) => throw new NotImplementedException();
-			public override int CalculateDrawnHeight(ViewInfo view) => throw new NotImplementedException();
+			public override Size Draw(DrawContext context, int x, int y) => throw new NotImplementedException();
+			public override int CalculateDrawnHeight(DrawContext context) => throw new NotImplementedException();
 		}
 
 		#endregion
@@ -136,6 +136,7 @@ namespace ReClassNET.CodeGenerator
 				[typeof(Int16Node)] = typeMapping.TypeInt16,
 				[typeof(Int32Node)] = typeMapping.TypeInt32,
 				[typeof(Int64Node)] = typeMapping.TypeInt64,
+				[typeof(NIntNode)] = typeMapping.TypeNInt,
 				[typeof(Matrix3x3Node)] = typeMapping.TypeMatrix3x3,
 				[typeof(Matrix3x4Node)] = typeMapping.TypeMatrix3x4,
 				[typeof(Matrix4x4Node)] = typeMapping.TypeMatrix4x4,
@@ -143,6 +144,7 @@ namespace ReClassNET.CodeGenerator
 				[typeof(UInt16Node)] = typeMapping.TypeUInt16,
 				[typeof(UInt32Node)] = typeMapping.TypeUInt32,
 				[typeof(UInt64Node)] = typeMapping.TypeUInt64,
+				[typeof(NUIntNode)] = typeMapping.TypeNUInt,
 				[typeof(Utf8CharacterNode)] = typeMapping.TypeUtf8Text,
 				[typeof(Utf16CharacterNode)] = typeMapping.TypeUtf16Text,
 				[typeof(Utf32CharacterNode)] = typeMapping.TypeUtf32Text,

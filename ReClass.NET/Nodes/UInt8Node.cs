@@ -1,5 +1,6 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Globalization;
+using ReClassNET.Controls;
 using ReClassNET.Extensions;
 using ReClassNET.Memory;
 using ReClassNET.UI;
@@ -16,10 +17,10 @@ namespace ReClassNET.Nodes
 			icon = Properties.Resources.B16x16_Button_UInt_8;
 		}
 
-		public override Size Draw(ViewInfo view, int x, int y)
+		public override Size Draw(DrawContext context, int x, int y)
 		{
-			var value = ReadValueFromMemory(view.Memory);
-			return DrawNumeric(view, x, y, Icons.Unsigned, "UInt8", value.ToString(), $"0x{value:X}");
+			var value = ReadValueFromMemory(context.Memory);
+			return DrawNumeric(context, x, y, context.IconProvider.Unsigned, "UInt8", value.ToString(), $"0x{value:X}");
 		}
 
 		public override void Update(HotSpot spot)

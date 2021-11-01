@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
+using ReClassNET.Controls;
 using ReClassNET.Memory;
 using ReClassNET.UI;
 
@@ -33,54 +34,54 @@ namespace ReClassNET.Nodes
 			}
 		}
 
-		public override Size Draw(ViewInfo view, int x, int y)
+		public override Size Draw(DrawContext context, int x, int y)
 		{
 			if (IsHidden && !IsWrapped)
 			{
-				return DrawHidden(view, x, y);
+				return DrawHidden(context, x, y);
 			}
 
 			var origX = x;
 			var origY = y;
 
-			AddSelection(view, x, y, view.Font.Height);
+			AddSelection(context, x, y, context.Font.Height);
 
-			x = AddOpenCloseIcon(view, x, y);
-			x = AddIcon(view, x, y, Icons.VTable, HotSpot.NoneId, HotSpotType.None);
+			x = AddOpenCloseIcon(context, x, y);
+			x = AddIcon(context, x, y, context.IconProvider.VirtualTable, HotSpot.NoneId, HotSpotType.None);
 
 			var tx = x;
-			x = AddAddressOffset(view, x, y);
+			x = AddAddressOffset(context, x, y);
 
-			x = AddText(view, x, y, view.Settings.VTableColor, HotSpot.NoneId, $"VTable[{Nodes.Count}]") + view.Font.Width;
+			x = AddText(context, x, y, context.Settings.VTableColor, HotSpot.NoneId, $"VTable[{Nodes.Count}]") + context.Font.Width;
 			if (!IsWrapped)
 			{
-				x = AddText(view, x, y, view.Settings.NameColor, HotSpot.NameId, Name) + view.Font.Width;
+				x = AddText(context, x, y, context.Settings.NameColor, HotSpot.NameId, Name) + context.Font.Width;
 			}
 
-			x = AddComment(view, x, y);
+			x = AddComment(context, x, y);
 
-			DrawInvalidMemoryIndicatorIcon(view, y);
-			AddContextDropDownIcon(view, y);
-			AddDeleteIcon(view, y);
+			DrawInvalidMemoryIndicatorIcon(context, y);
+			AddContextDropDownIcon(context, y);
+			AddDeleteIcon(context, y);
 
-			y += view.Font.Height;
+			y += context.Font.Height;
 
 			var size = new Size(x - origX, y - origY);
 
-			if (LevelsOpen[view.Level])
+			if (LevelsOpen[context.Level])
 			{
-				var ptr = view.Memory.ReadIntPtr(Offset);
+				var ptr = context.Memory.ReadIntPtr(Offset);
 
 				memory.Size = Nodes.Count * IntPtr.Size;
-				memory.UpdateFrom(view.Process, ptr);
+				memory.UpdateFrom(context.Process, ptr);
 
-				var v = view.Clone();
-				v.Address = ptr;
-				v.Memory = memory;
+				var innerContext = context.Clone();
+				innerContext.Address = ptr;
+				innerContext.Memory = memory;
 
 				foreach (var node in Nodes)
 				{
-					var innerSize = node.Draw(v, tx, y);
+					var innerSize = node.Draw(innerContext, tx, y);
 
 					size.Width = Math.Max(size.Width, innerSize.Width + tx - origX);
 					size.Height += innerSize.Height;
@@ -92,17 +93,17 @@ namespace ReClassNET.Nodes
 			return size;
 		}
 
-		public override int CalculateDrawnHeight(ViewInfo view)
+		public override int CalculateDrawnHeight(DrawContext context)
 		{
 			if (IsHidden && !IsWrapped)
 			{
 				return HiddenHeight;
 			}
 
-			var height = view.Font.Height;
-			if (LevelsOpen[view.Level])
+			var height = context.Font.Height;
+			if (LevelsOpen[context.Level])
 			{
-				height += Nodes.Sum(n => n.CalculateDrawnHeight(view));
+				height += Nodes.Sum(n => n.CalculateDrawnHeight(context));
 			}
 			return height;
 		}

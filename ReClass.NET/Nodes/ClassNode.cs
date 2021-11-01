@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Linq;
+using ReClassNET.Controls;
 using ReClassNET.UI;
 
 namespace ReClassNET.Nodes
@@ -24,17 +25,7 @@ namespace ReClassNET.Nodes
 
 		protected override bool ShouldCompensateSizeChanges => true;
 
-		private NodeUuid uuid;
-		public NodeUuid Uuid
-		{
-			get => uuid;
-			set
-			{
-				Contract.Requires(value != null);
-
-				uuid = value;
-			}
-		}
+		public Guid Uuid { get; set; }
 
 		public string AddressFormula { get; set; } = DefaultAddressFormula;
 
@@ -46,7 +37,7 @@ namespace ReClassNET.Nodes
 
 			LevelsOpen.DefaultValue = true;
 
-			Uuid = new NodeUuid(true);
+			Uuid = Guid.NewGuid();
 
 			if (notifyClassCreated)
 			{
@@ -84,35 +75,35 @@ namespace ReClassNET.Nodes
 			AddBytes(IntPtr.Size);
 		}
 
-		public override Size Draw(ViewInfo view, int x, int y)
+		public override Size Draw(DrawContext context, int x, int y)
 		{
-			AddSelection(view, 0, y, view.Font.Height);
+			AddSelection(context, 0, y, context.Font.Height);
 
 			var origX = x;
 			var origY = y;
 
-			x = AddOpenCloseIcon(view, x, y);
+			x = AddOpenCloseIcon(context, x, y);
 
 			var tx = x;
 
-			x = AddIcon(view, x, y, Icons.Class, HotSpot.NoneId, HotSpotType.None);
-			x = AddText(view, x, y, view.Settings.OffsetColor, 0, AddressFormula) + view.Font.Width;
+			x = AddIcon(context, x, y, context.IconProvider.Class, HotSpot.NoneId, HotSpotType.None);
+			x = AddText(context, x, y, context.Settings.OffsetColor, 0, AddressFormula) + context.Font.Width;
 
-			x = AddText(view, x, y, view.Settings.TypeColor, HotSpot.NoneId, "Class") + view.Font.Width;
-			x = AddText(view, x, y, view.Settings.NameColor, HotSpot.NameId, Name) + view.Font.Width;
-			x = AddText(view, x, y, view.Settings.ValueColor, HotSpot.NoneId, $"[{MemorySize}]") + view.Font.Width;
-			x = AddComment(view, x, y);
+			x = AddText(context, x, y, context.Settings.TypeColor, HotSpot.NoneId, "Class") + context.Font.Width;
+			x = AddText(context, x, y, context.Settings.NameColor, HotSpot.NameId, Name) + context.Font.Width;
+			x = AddText(context, x, y, context.Settings.ValueColor, HotSpot.NoneId, $"[{MemorySize}]") + context.Font.Width;
+			x = AddComment(context, x, y);
 
-			y += view.Font.Height;
+			y += context.Font.Height;
 
 			var size = new Size(x - origX, y - origY);
 
-			if (LevelsOpen[view.Level])
+			if (LevelsOpen[context.Level])
 			{
 				var childOffset = tx - origX;
 
-				var nv = view.Clone();
-				nv.Level++;
+				var innerContext = context.Clone();
+				innerContext.Level++;
 				foreach (var node in Nodes)
 				{
 					Size AggregateNodeSizes(Size baseSize, Size newSize)
@@ -126,9 +117,9 @@ namespace ReClassNET.Nodes
 					}
 
 					// Draw the node if it is in the visible area.
-					if (view.ClientArea.Contains(tx, y))
+					if (context.ClientArea.Contains(tx, y))
 					{
-						var innerSize = node.Draw(nv, tx, y);
+						var innerSize = node.Draw(innerContext, tx, y);
 
 						size = AggregateNodeSizes(size, ExtendWidth(innerSize, childOffset));
 
@@ -137,13 +128,13 @@ namespace ReClassNET.Nodes
 					else
 					{
 						// Otherwise calculate the height...
-						var calculatedHeight = node.CalculateDrawnHeight(nv);
+						var calculatedHeight = node.CalculateDrawnHeight(innerContext);
 
 						// and check if the node area overlaps with the visible area...
-						if (new Rectangle(tx, y, 9999999, calculatedHeight).IntersectsWith(view.ClientArea))
+						if (new Rectangle(tx, y, 9999999, calculatedHeight).IntersectsWith(context.ClientArea))
 						{
 							// then draw the node...
-							var innerSize = node.Draw(nv, tx, y);
+							var innerSize = node.Draw(innerContext, tx, y);
 
 							size = AggregateNodeSizes(size, ExtendWidth(innerSize, childOffset));
 
@@ -163,17 +154,17 @@ namespace ReClassNET.Nodes
 			return size;
 		}
 
-		public override int CalculateDrawnHeight(ViewInfo view)
+		public override int CalculateDrawnHeight(DrawContext context)
 		{
 			if (IsHidden)
 			{
 				return HiddenHeight;
 			}
 
-			var height = view.Font.Height;
-			if (LevelsOpen[view.Level])
+			var height = context.Font.Height;
+			if (LevelsOpen[context.Level])
 			{
-				var nv = view.Clone();
+				var nv = context.Clone();
 				nv.Level++;
 				height += Nodes.Sum(n => n.CalculateDrawnHeight(nv));
 			}

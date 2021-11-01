@@ -52,7 +52,7 @@ This is a port of ReClass to the .NET platform with lots of additional features.
 - [MemoryPipe Plugin](https://github.com/ReClassNET/ReClass.NET-MemoryPipePlugin)
 - [LoadBinary Plugin](https://github.com/ReClassNET/ReClass.NET-LoadBinaryPlugin)
 - [Handle Abuser Plugin](https://github.com/ReClassNET/ReClass.NET-HandleAbuser)
-- [Unreal Plugin](https://github.com/DrP3pp3r/ReClass.NET-UnrealPlugin) (by [DrP3pp3r](https://github.com/DrP3pp3r))
+- Unreal Plugin (not available anymore) (by [DrP3pp3r](https://github.com/DrP3pp3r))
 - [DriverReader](https://github.com/niemand-sec/ReClass.NET-DriverReader) (by [Niemand](https://github.com/niemand-sec))
 
 To install a plugin just copy it in the "Plugins" folder.
@@ -74,7 +74,7 @@ Just download the [latest version](https://github.com/ReClassNET/ReClass.NET/rel
   Valid operations are read ([..]), add (+), sub (-), mul (*) and div (/). Please note that all operations are integer calculations.
 
 ## Compiling
-If you want to compile ReClass.NET just fork the repository and open the ReClass.NET.sln file with Visual Studio 2017.
+If you want to compile ReClass.NET just fork the repository and open the ReClass.NET.sln file with Visual Studio 2019.
 Compile the project and copy the dependencies to the output folder.
 
 ## Videos
@@ -120,3 +120,4 @@ Settings
 - [buddyfavors](https://github.com/buddyfavors)
 - [DrP3pp3r](https://github.com/DrP3pp3r)
 - [ko1N](https://github.com/ko1N)
+- [Niemand](https://github.com/niemand-sec) (see his talk at [BlackHat Europe 2019 (London) "Unveiling the underground world of Anti-Cheats"](https://www.blackhat.com/eu-19/briefings/schedule/index.html#unveiling-the-underground-world-of-anti-cheats-17358))

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ReClassNET.CodeGenerator;
+using ReClassNET.Controls;
 using ReClassNET.DataExchange.ReClass;
 using ReClassNET.Extensions;
 using ReClassNET.Logger;
@@ -407,6 +408,15 @@ namespace ReClassNET.Forms
 
 					containerNode.EndUpdate();
 				}
+			}
+		}
+
+		private void EditSelectedNodeName()
+		{
+			var selectedNodes = memoryViewControl.GetSelectedNodes();
+			if (selectedNodes.Count == 1)
+			{
+				memoryViewControl.ShowNodeNameEditBox(selectedNodes[0].Node);
 			}
 		}
 

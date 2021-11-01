@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Diagnostics.Contracts;
 using System.Drawing;
-using ReClassNET.UI;
+using ReClassNET.Controls;
 
 namespace ReClassNET.Nodes
 {
@@ -21,9 +21,9 @@ namespace ReClassNET.Nodes
 			Name = string.Empty;
 		}
 
-		public override Size Draw(ViewInfo view, int x, int y)
+		public override Size Draw(DrawContext context, int x, int y)
 		{
-			return Draw(view, x, y, $"({Offset / IntPtr.Size})", MethodName);
+			return Draw(context, x, y, $"({Offset / IntPtr.Size})", MethodName);
 		}
 	}
 }

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Drawing;
-using ReClassNET.UI;
+using ReClassNET.Controls;
 
 namespace ReClassNET.Nodes
 {
@@ -22,19 +22,19 @@ namespace ReClassNET.Nodes
 			ChangeInnerNode(IntPtr.Size == 4 ? (BaseNode)new Hex32Node() : new Hex64Node());
 		}
 
-		public override Size Draw(ViewInfo view, int x, int y)
+		public override Size Draw(DrawContext context, int x, int y)
 		{
-			return Draw(view, x, y, "Array");
+			return Draw(context, x, y, "Array");
 		}
 
-		protected override Size DrawChild(ViewInfo view, int x, int y)
+		protected override Size DrawChild(DrawContext context, int x, int y)
 		{
-			var v = view.Clone();
-			v.Address = view.Address + Offset + InnerNode.MemorySize * CurrentIndex;
-			v.Memory = view.Memory.Clone();
-			v.Memory.Offset += Offset + InnerNode.MemorySize * CurrentIndex;
+			var innerContext = context.Clone();
+			innerContext.Address = context.Address + Offset + InnerNode.MemorySize * CurrentIndex;
+			innerContext.Memory = context.Memory.Clone();
+			innerContext.Memory.Offset += Offset + InnerNode.MemorySize * CurrentIndex;
 
-			return InnerNode.Draw(v, x, y);
+			return InnerNode.Draw(innerContext, x, y);
 		}
 	}
 }

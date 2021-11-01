@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Drawing;
+using ReClassNET.Controls;
 using ReClassNET.Memory;
 using ReClassNET.UI;
 
@@ -17,7 +18,7 @@ namespace ReClassNET.Nodes
 
 		public override bool UseMemoryPreviewToolTip(HotSpot spot, out IntPtr address)
 		{
-			var value = spot.Memory.ReadObject<UInt64FloatDoubleData>(Offset);
+			var value = ReadFromBuffer(spot.Memory, Offset);
 
 			address = value.IntPtr;
 
@@ -26,14 +27,14 @@ namespace ReClassNET.Nodes
 
 		public override string GetToolTipText(HotSpot spot)
 		{
-			var value = spot.Memory.ReadObject<UInt64FloatDoubleData>(Offset);
+			var value = ReadFromBuffer(spot.Memory, Offset);
 
 			return $"Int64: {value.LongValue}\nUInt64: 0x{value.ULongValue:X016}\nFloat: {value.FloatValue:0.000}\nDouble: {value.DoubleValue:0.000}";
 		}
 
-		public override Size Draw(ViewInfo view, int x, int y)
+		public override Size Draw(DrawContext context, int x, int y)
 		{
-			return Draw(view, x, y, view.Settings.ShowNodeText ? view.Memory.ReadString(view.Settings.RawDataEncoding, Offset, 8) + " " : null, 8);
+			return Draw(context, x, y, context.Settings.ShowNodeText ? context.Memory.ReadString(context.Settings.RawDataEncoding, Offset, 8) + " " : null, 8);
 		}
 
 		public override void Update(HotSpot spot)
@@ -41,15 +42,21 @@ namespace ReClassNET.Nodes
 			Update(spot, 8);
 		}
 
-		protected override int AddComment(ViewInfo view, int x, int y)
+		protected override int AddComment(DrawContext context, int x, int y)
 		{
-			x = base.AddComment(view, x, y);
+			x = base.AddComment(context, x, y);
 
-			var value = view.Memory.ReadObject<UInt64FloatDoubleData>(Offset);
+			var value = ReadFromBuffer(context.Memory, Offset);
 
-			x = AddComment(view, x, y, value.FloatValue, value.IntPtr, value.UIntPtr);
+			x = AddComment(context, x, y, value.FloatValue, value.IntPtr, value.UIntPtr);
 
 			return x;
 		}
+
+		private static UInt64FloatDoubleData ReadFromBuffer(MemoryBuffer memory, int offset) => new UInt64FloatDoubleData
+		{
+			Raw1 = memory.ReadInt32(offset),
+			Raw2 = memory.ReadInt32(offset + sizeof(int))
+		};
 	}
 }
